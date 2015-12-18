@@ -1,0 +1,81 @@
+<!DOCTYPE>
+<html>
+
+<head>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.10.1/lodash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/backbone.js/1.2.3/backbone-min.js"></script>
+<script id="item-template" type="text/template">
+
+<td>{{question}}</td>
+
+</script>
+</head>
+
+<body>
+<table id="questions"></table>
+
+
+<script>
+(function(){
+    'use strict'
+
+    _.templateSettings = {
+        interpolate: /\{\{(.+?)\}\}/g
+    };
+
+    Backbone.$ = $;
+
+    var Question = Backbone.Model.extend({
+    });
+    var QuestionList = Backbone.Collection.extend({
+        url: '/api/qs',
+        model: Question
+    });
+    var Questions = new QuestionList;
+
+    var QuestionView = Backbone.View.extend({
+        tagName: 'tr',
+        template: _.template($('#item-template').html()),
+        initialize: function(){
+            this.listenTo(this.model, "change", this.render)
+        },
+        render: function(){
+            this.$el.html(this.template(this.model.toJSON()))
+            console.log(this.el)
+            return this;
+        }
+    });
+
+    var AppView = Backbone.View.extend({
+        el: $('#questions'),
+        questionViews: [],
+        initialize: function() {
+
+            this.listenTo(Questions, 'add', this.addOne);
+            this.listenTo(Questions, 'reset', this.addAll);
+            this.listenTo(Questions, 'all', this.render);
+
+            Questions.fetch();
+        },
+        addOne: function(question){
+            var view = new QuestionView({model: question})
+            this.$el.append(view.render().el)
+        },
+        addAll: function(){
+            this.questionViews = []
+            Questions.each(this.addOne, this)            
+        },
+        render: function(){
+            
+        }
+    });
+
+    var App = new AppView
+})()
+</script>
+
+
+</body>
+
+</html>
